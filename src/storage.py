@@ -21,9 +21,10 @@ def slugify(name: str) -> str:
     return s or "uncategorized"
 
 
-def save_mistake(image_bytes: bytes, image_ext: str, analysis) -> tuple[str, str]:
+def save_mistake(image_bytes: bytes, image_ext: str, analysis, mistake_id: str | None = None) -> tuple[str, str]:
     _ensure_dirs()
-    mistake_id = uuid.uuid4().hex[:12]
+    if mistake_id is None:
+        mistake_id = uuid.uuid4().hex[:12]
     created_at = datetime.now().isoformat(timespec="seconds")
     category_slug = slugify(analysis.category)
 

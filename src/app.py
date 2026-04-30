@@ -2,11 +2,11 @@ import socket
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, abort, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, request, send_from_directory, url_for
 
 load_dotenv()
 
-import gemini_client
+import inbox
 import storage
 
 app = Flask(__name__)
@@ -33,13 +33,18 @@ def upload():
     ext = Path(file.filename).suffix.lower() or ".jpg"
     mime = file.mimetype or "image/jpeg"
 
-    try:
-        analysis = gemini_client.analyze_image(image_bytes, mime)
-    except Exception as exc:
-        return render_template("upload.html", error=f"Analysis failed: {exc}"), 500
+    job_id = inbox.enqueue(image_bytes, ext, mime)
+    return redirect(url_for("status", job_id=job_id))
 
-    mistake_id, category_slug = storage.save_mistake(image_bytes, ext, analysis)
-    return redirect(url_for("view_mistake", category=category_slug, mistake_id=mistake_id))
+
+@app.route("/status/<job_id>")
+def status(job_id):
+    return render_template("status.html", job_id=job_id)
+
+
+@app.route("/status/<job_id>/check")
+def status_check(job_id):
+    return jsonify(inbox.lookup_status(job_id))
 
 
 @app.route("/category/<category>")
