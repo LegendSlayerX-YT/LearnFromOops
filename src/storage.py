@@ -82,6 +82,28 @@ def get_mistake(category_slug: str, mistake_id: str) -> dict | None:
     return json.loads(json_file.read_text())
 
 
+def mark_seen(category_slug: str, mistake_id: str) -> None:
+    json_file = MISTAKES_DIR / category_slug / f"{mistake_id}.json"
+    if not json_file.exists():
+        return
+    data = json.loads(json_file.read_text())
+    data["last_seen_at"] = datetime.now().isoformat(timespec="seconds")
+    tmp = json_file.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(data, indent=2))
+    tmp.rename(json_file)
+
+
+def list_new_mistakes() -> list[dict]:
+    _ensure_dirs()
+    items = []
+    for jf in MISTAKES_DIR.glob("*/*.json"):
+        data = json.loads(jf.read_text())
+        if not data.get("last_seen_at"):
+            items.append(data)
+    items.sort(key=lambda m: m["created_at"], reverse=True)
+    return items
+
+
 def _render_standalone_html(m: dict) -> str:
     e = html.escape
     return f"""<!doctype html>

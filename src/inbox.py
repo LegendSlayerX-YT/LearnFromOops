@@ -35,16 +35,43 @@ def enqueue(image_bytes: bytes, ext: str, mime: str) -> str:
     return job_id
 
 
-def lookup_status(job_id: str) -> dict:
+def list_inflight() -> list[dict]:
     ensure_dirs()
-    if (PENDING_DIR / f"{job_id}.json").exists():
-        return {"state": "pending"}
-    if (PROCESSING_DIR / f"{job_id}.json").exists():
-        return {"state": "processing"}
-    if (FAILED_DIR / f"{job_id}.json").exists():
-        meta = json.loads((FAILED_DIR / f"{job_id}.json").read_text())
-        return {"state": "failed", "error": meta.get("last_error", "unknown error")}
-    found = list(storage.MISTAKES_DIR.glob(f"*/{job_id}.json"))
-    if found:
-        return {"state": "done", "category_slug": found[0].parent.name}
-    return {"state": "unknown"}
+    jobs = []
+    for state, dir_ in (("pending", PENDING_DIR), ("processing", PROCESSING_DIR), ("failed", FAILED_DIR)):
+        for sidecar in dir_.glob("*.json"):
+            try:
+                meta = json.loads(sidecar.read_text())
+            except (json.JSONDecodeError, FileNotFoundError):
+                continue
+            jobs.append({
+                "id": meta.get("id", sidecar.stem),
+                "state": state,
+                "created_at": meta.get("created_at", ""),
+                "attempts": meta.get("attempts", 0),
+                "last_error": meta.get("last_error"),
+            })
+    jobs.sort(key=lambda j: j["created_at"], reverse=True)
+    return jobs
+
+
+def retry_failed(job_id: str) -> bool:
+    ensure_dirs()
+    sidecar = FAILED_DIR / f"{job_id}.json"
+    if not sidecar.exists():
+        return False
+    meta = json.loads(sidecar.read_text())
+    ext = meta.get("ext", "")
+    meta["attempts"] = 0
+    meta.pop("last_error", None)
+    tmp = sidecar.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(meta, indent=2))
+    tmp.rename(sidecar)
+    # Move image first so the sidecar landing in pending/ — the worker's "ready"
+    # signal — only appears after the bytes are in place.
+    image = FAILED_DIR / f"{job_id}{ext}"
+    if image.exists():
+        image.rename(PENDING_DIR / image.name)
+    sidecar.rename(PENDING_DIR / sidecar.name)
+    return True
+

@@ -2,6 +2,36 @@
 {% block content %}
 <h1>Your Math Mistakes</h1>
 <p class="subtitle">{{ total }} mistake{{ '' if total == 1 else 's' }} across {{ categories|length }} categor{{ 'y' if categories|length == 1 else 'ies' }}</p>
+{% if new_count > 0 %}
+<a href="{{ url_for('view_new') }}" class="new-bucket">
+  <span class="new-label">New mistakes</span>
+  <span class="new-sub">Not yet reviewed</span>
+  <span class="new-count">{{ new_count }}</span>
+</a>
+{% endif %}
+{% if inflight %}
+<section class="inflight">
+  <h2 class="inflight-title">In progress</h2>
+  <ul class="inflight-list">
+    {% for j in inflight %}
+      <li class="inflight-item">
+        <div class="inflight-row">
+          <span class="status-badge status-{{ j.state }}">{{ j.state }}</span>
+          <span class="inflight-time">{{ j.created_at }}</span>
+          {% if j.state == 'failed' %}
+            <form method="POST" action="{{ url_for('retry_job', job_id=j.id) }}" class="retry-form">
+              <button type="submit" class="retry-btn">Retry</button>
+            </form>
+          {% endif %}
+        </div>
+        {% if j.last_error %}
+          <div class="inflight-error">{{ j.last_error }}</div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% if categories %}
 <ul class="category-grid">
   {% for c in categories %}

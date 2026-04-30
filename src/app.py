@@ -2,7 +2,7 @@ import socket
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, abort, jsonify, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, abort, redirect, render_template, request, send_from_directory, url_for
 
 load_dotenv()
 
@@ -17,7 +17,28 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 def index():
     categories = storage.list_categories()
     total = sum(c["count"] for c in categories)
-    return render_template("index.html", categories=categories, total=total)
+    new_count = len(storage.list_new_mistakes())
+    inflight = inbox.list_inflight()
+    return render_template(
+        "index.html",
+        categories=categories,
+        total=total,
+        new_count=new_count,
+        inflight=inflight,
+    )
+
+
+@app.route("/inbox/<job_id>/retry", methods=["POST"])
+def retry_job(job_id):
+    if not inbox.retry_failed(job_id):
+        abort(404)
+    return redirect(url_for("index"))
+
+
+@app.route("/new")
+def view_new():
+    mistakes = storage.list_new_mistakes()
+    return render_template("new.html", mistakes=mistakes)
 
 
 @app.route("/upload", methods=["GET", "POST"])
@@ -33,18 +54,8 @@ def upload():
     ext = Path(file.filename).suffix.lower() or ".jpg"
     mime = file.mimetype or "image/jpeg"
 
-    job_id = inbox.enqueue(image_bytes, ext, mime)
-    return redirect(url_for("status", job_id=job_id))
-
-
-@app.route("/status/<job_id>")
-def status(job_id):
-    return render_template("status.html", job_id=job_id)
-
-
-@app.route("/status/<job_id>/check")
-def status_check(job_id):
-    return jsonify(inbox.lookup_status(job_id))
+    inbox.enqueue(image_bytes, ext, mime)
+    return render_template("upload.html", queued=True)
 
 
 @app.route("/category/<category>")
@@ -60,6 +71,7 @@ def view_mistake(category, mistake_id):
     mistake = storage.get_mistake(category, mistake_id)
     if not mistake:
         abort(404)
+    storage.mark_seen(category, mistake_id)
     return render_template("mistake.html", mistake=mistake, slug=category)
 
 

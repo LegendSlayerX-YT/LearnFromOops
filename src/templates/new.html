@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}New mistakes — LearnFromOops{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">← All categories</a>
+<h1>New mistakes</h1>
+{% if mistakes %}
+<p class="subtitle">{{ mistakes|length }} mistake{{ '' if mistakes|length == 1 else 's' }} you haven't opened yet.</p>
+<ul class="mistake-list">
+  {% for m in mistakes %}
+    <li>
+      <a href="{{ url_for('view_mistake', category=m.category_slug, mistake_id=m.id) }}">
+        <span class="badge">{{ m.category }}</span>
+        <div class="mistake-snippet">{{ m.problem }}</div>
+        <div class="mistake-meta">{{ m.created_at }}</div>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <p>Nothing new — you've reviewed everything.</p>
+</div>
+{% endif %}
+{% endblock %}
