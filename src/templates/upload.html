@@ -3,10 +3,11 @@
 {% block content %}
 <h1>New Mistake</h1>
 <p>Upload a photo of the problem with the wrong answer. The AI will read it, classify it, and show the correct solution.</p>
+{% if lan_url %}<p class="hint">To use your phone's camera, open this site on your phone: <code>{{ lan_url }}</code> (must be on the same Wi-Fi).</p>{% endif %}
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 {% if queued %}<div class="notice">Got it — your image is being analyzed in the background. Upload another below if you have more.</div>{% endif %}
 <form method="POST" enctype="multipart/form-data" class="upload-form">
-  <input type="file" name="image" accept="image/*" capture="environment" required>
+  <input type="file" name="image" accept="image/*" required>
   <button type="submit">Upload</button>
 </form>
 {% endblock %}

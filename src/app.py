@@ -9,6 +9,29 @@ load_dotenv()
 import inbox
 import storage
 
+PORT = 5000
+
+
+def _lan_ip() -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
+LAN_URL = f"http://{_lan_ip()}:{PORT}"
+
+
+def _is_mobile() -> bool:
+    if request.headers.get("Sec-CH-UA-Mobile") == "?1":
+        return True
+    ua = request.headers.get("User-Agent", "")
+    return "Mobile" in ua or "Android" in ua
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
@@ -43,19 +66,20 @@ def view_new():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
+    lan_url = None if _is_mobile() else LAN_URL
     if request.method == "GET":
-        return render_template("upload.html")
+        return render_template("upload.html", lan_url=lan_url)
 
     file = request.files.get("image")
     if not file or not file.filename:
-        return render_template("upload.html", error="Please choose an image."), 400
+        return render_template("upload.html", error="Please choose an image.", lan_url=lan_url), 400
 
     image_bytes = file.read()
     ext = Path(file.filename).suffix.lower() or ".jpg"
     mime = file.mimetype or "image/jpeg"
 
     inbox.enqueue(image_bytes, ext, mime)
-    return render_template("upload.html", queued=True)
+    return render_template("upload.html", queued=True, lan_url=lan_url)
 
 
 @app.route("/category/<category>")
@@ -80,18 +104,6 @@ def serve_image(filename):
     return send_from_directory(storage.IMAGES_DIR, filename)
 
 
-def _lan_ip() -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(("8.8.8.8", 80))
-        return s.getsockname()[0]
-    except OSError:
-        return "127.0.0.1"
-    finally:
-        s.close()
-
-
 if __name__ == "__main__":
-    port = 5000
-    print(f" * LAN access: http://{_lan_ip()}:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    print(f" * LAN access: {LAN_URL}")
+    app.run(host="0.0.0.0", port=PORT, debug=True)
