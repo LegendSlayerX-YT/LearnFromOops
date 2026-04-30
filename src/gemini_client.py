@@ -15,14 +15,16 @@ class MistakeAnalysis(BaseModel):
     explanation: str
 
 
-_PROMPT = """You are analyzing a photo of a math problem that a student has answered incorrectly.
+_PROMPT = """You are analyzing a photo of a math problem that a student may have answered incorrectly.
+
+Format any math expression as LaTeX, using $...$ for inline math and $$...$$ for display blocks. Plain prose stays as plain text. Do not use Unicode math symbols or control characters; write everything in standard LaTeX (e.g. \\sqrt, \\frac, \\binom, \\cdot, \\times).
 
 Return a JSON object with these fields:
-- problem: the full text of the math problem, transcribed exactly. Use plain text; for math expressions, write them inline (e.g. "x^2 + 3x = 10").
-- student_answer: the student's written answer (which is wrong). If you cannot find one, return an empty string.
+- problem: the full text of the math problem, transcribed exactly, with math wrapped in $...$ (e.g. "Solve $x^2 + 3x = 10$.").
+- student_answer: the student's written answer (which is wrong), with math in LaTeX wrapped in $...$ or $$...$$. If you cannot find one, return an empty string.
 - category: classify the problem into EXACTLY ONE of these categories: {categories}. Return the category string verbatim.
-- ideal_answer: the correct final answer.
-- explanation: a short, kid-friendly step-by-step explanation of how to solve it correctly. Use plain text with line breaks between steps.
+- ideal_answer: the correct final answer, with math in LaTeX wrapped in $...$ or $$...$$.
+- explanation: a short, kid-friendly step-by-step explanation. Plain prose for the words; wrap every math expression in $...$ or $$...$$. Use line breaks between steps.
 """
 
 
@@ -40,6 +42,7 @@ def _get_client() -> genai.Client:
 
 
 def analyze_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> MistakeAnalysis:
+    print("Start Analyzing image with Gemini...")
     client = _get_client()
     model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     prompt = _PROMPT.format(categories=", ".join(CATEGORIES))
@@ -54,4 +57,5 @@ def analyze_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> MistakeA
             response_schema=MistakeAnalysis,
         ),
     )
+    print("Finished analyzing image with Gemini.")
     return MistakeAnalysis.model_validate_json(response.text)

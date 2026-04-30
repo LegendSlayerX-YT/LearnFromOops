@@ -4,8 +4,28 @@
 <h1>New Mistake</h1>
 <p>Upload a photo of the problem with the wrong answer. The AI will read it, classify it, and show the correct solution.</p>
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
-<form method="POST" enctype="multipart/form-data" class="upload-form">
-  <input type="file" name="image" accept="image/*" capture="environment" required>
-  <button type="submit">Analyze</button>
+<form method="POST" enctype="multipart/form-data" class="upload-form" id="upload-form">
+  <input type="file" name="image" accept="image/*" capture="environment" required id="upload-input">
+  <button type="submit" id="upload-button">Analyze</button>
+  <div class="thinking" id="thinking" hidden>
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Gemini is thinking… this can take a few seconds.</span>
+  </div>
 </form>
+<script>
+  (function () {
+    var form = document.getElementById("upload-form");
+    var button = document.getElementById("upload-button");
+    var thinking = document.getElementById("thinking");
+    form.addEventListener("submit", function (e) {
+      if (button.disabled) {
+        e.preventDefault();
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "Analyzing…";
+      thinking.hidden = false;
+    });
+  })();
+</script>
 {% endblock %}

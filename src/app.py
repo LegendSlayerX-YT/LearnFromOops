@@ -1,3 +1,4 @@
+import socket
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -62,5 +63,18 @@ def serve_image(filename):
     return send_from_directory(storage.IMAGES_DIR, filename)
 
 
+def _lan_ip() -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    port = 5000
+    print(f" * LAN access: http://{_lan_ip()}:{port}")
+    app.run(host="0.0.0.0", port=port, debug=True)

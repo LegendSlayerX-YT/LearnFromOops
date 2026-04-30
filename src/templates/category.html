@@ -7,7 +7,7 @@
   {% for m in mistakes %}
     <li>
       <a href="{{ url_for('view_mistake', category=slug, mistake_id=m.id) }}">
-        <div class="mistake-snippet">{{ m.problem[:120] }}{% if m.problem|length > 120 %}…{% endif %}</div>
+        <div class="mistake-snippet">{{ m.problem }}</div>
         <div class="mistake-meta">{{ m.created_at }}</div>
       </a>
     </li>
