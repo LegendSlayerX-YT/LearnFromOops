@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ mistake.category }} mistake — LearnFromOops{% endblock %}
+{% block content %}
+<a href="{{ url_for('view_category', category=slug) }}" class="back">← Back to {{ mistake.category }}</a>
+<article class="mistake">
+  <span class="badge">{{ mistake.category }}</span>
+  <img src="{{ url_for('serve_image', filename=mistake.image_filename) }}" alt="Original problem">
+  <section>
+    <h2>Problem</h2>
+    <p>{{ mistake.problem }}</p>
+  </section>
+  <section class="wrong">
+    <h2>Student Answer</h2>
+    <p>{{ mistake.student_answer }}</p>
+  </section>
+  <section class="right">
+    <h2>Correct Answer</h2>
+    <p><strong>{{ mistake.ideal_answer }}</strong></p>
+  </section>
+  <section>
+    <h2>How to Solve</h2>
+    <p class="explanation">{{ mistake.explanation }}</p>
+  </section>
+  <p class="meta">Captured {{ mistake.created_at }}</p>
+</article>
+{% endblock %}

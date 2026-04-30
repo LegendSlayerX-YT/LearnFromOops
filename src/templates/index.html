@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your Math Mistakes</h1>
+<p class="subtitle">{{ total }} mistake{{ '' if total == 1 else 's' }} across {{ categories|length }} categor{{ 'y' if categories|length == 1 else 'ies' }}</p>
+{% if categories %}
+<ul class="category-grid">
+  {% for c in categories %}
+    <li>
+      <a href="{{ url_for('view_category', category=c.slug) }}">
+        <span class="cat-name">{{ c.name }}</span>
+        <span class="cat-count">{{ c.count }}</span>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <p>No mistakes yet. Take a photo of a problem to get started.</p>
+  <a class="btn" href="{{ url_for('upload') }}">Add your first mistake</a>
+</div>
+{% endif %}
+{% endblock %}

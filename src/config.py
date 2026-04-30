@@ -1,0 +1,18 @@
+CATEGORIES = [
+    "Arithmetic",
+    "Fractions & Decimals",
+    "Percentages",
+    "Ratios & Proportions",
+    "Linear Equations",
+    "Inequalities",
+    "Polynomials",
+    "Exponents & Roots",
+    "Functions & Graphing",
+    "Geometry",
+    "Measurement",
+    "Probability",
+    "Statistics",
+    "Combinatorics",
+    "Trigonometry",
+    "Complex Numbers",
+]
