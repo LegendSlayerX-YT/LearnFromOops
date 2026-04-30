@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+osascript -e "tell application \"Terminal\"
+    activate
+    do script \"exec '${SCRIPT_DIR}/run.sh'\"
+end tell"

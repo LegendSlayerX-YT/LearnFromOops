@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/src"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if [ ! -d "$REPO_DIR/.venv" ]; then
+    python3 -m venv "$REPO_DIR/.venv"
+    "$REPO_DIR/.venv/bin/pip" install -r "$REPO_DIR/requirements.txt"
+fi
+
+source "$REPO_DIR/.venv/bin/activate"
+
+cd "$REPO_DIR/src"
 
 python worker.py &
 worker_pid=$!
