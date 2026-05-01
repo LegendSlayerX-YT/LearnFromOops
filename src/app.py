@@ -52,7 +52,7 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 @app.route("/")
 def index():
     categories = storage.list_categories()
-    total = sum(c["count"] for c in categories)
+    total = sum(c.count for c in categories)
     new_count = len(storage.list_new_mistakes())
     inflight = inbox.list_inflight()
     return render_template(

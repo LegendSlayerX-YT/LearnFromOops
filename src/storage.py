@@ -4,12 +4,26 @@ import re
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import NamedTuple
 
 from config import CATEGORIES, TOP_CATEGORIES
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 IMAGES_DIR = DATA_DIR / "images"
 MISTAKES_DIR = DATA_DIR / "mistakes"
+
+
+class Category(NamedTuple):
+    slug: str
+    name: str
+    count: int
+    sub_count: int
+
+
+class Subcategory(NamedTuple):
+    slug: str
+    name: str
+    count: int
 
 
 def _ensure_dirs() -> None:
@@ -63,7 +77,7 @@ def _iter_mistakes() -> list[dict]:
     return out
 
 
-def list_categories() -> list[dict]:
+def list_categories() -> list[Category]:
     items = _iter_mistakes()
     counts: dict[str, dict] = {}
     for m in items:
@@ -71,26 +85,22 @@ def list_categories() -> list[dict]:
         slug = m.get("category_slug", slugify(cat))
         if not cat:
             continue
-        bucket = counts.setdefault(slug, {"slug": slug, "name": cat, "count": 0, "subcategories": set()})
+        bucket = counts.setdefault(slug, {"name": cat, "count": 0, "subcategories": set()})
         bucket["count"] += 1
         sub = m.get("subcategory", "")
         if sub:
             bucket["subcategories"].add(sub)
-    out = []
-    for bucket in counts.values():
-        out.append({
-            "slug": bucket["slug"],
-            "name": bucket["name"],
-            "count": bucket["count"],
-            "sub_count": len(bucket["subcategories"]),
-        })
+    out = [
+        Category(slug=slug, name=b["name"], count=b["count"], sub_count=len(b["subcategories"]))
+        for slug, b in counts.items()
+    ]
     # Stable order: by configured top-category order, then alphabetic for unknown.
     order = {slugify(name): i for i, name in enumerate(TOP_CATEGORIES)}
-    out.sort(key=lambda c: (order.get(c["slug"], 999), c["name"]))
+    out.sort(key=lambda c: (order.get(c.slug, 999), c.name))
     return out
 
 
-def list_subcategories(category_slug: str) -> tuple[str, list[dict]]:
+def list_subcategories(category_slug: str) -> tuple[str, list[Subcategory]]:
     items = _iter_mistakes()
     category_name = ""
     counts: dict[str, dict] = {}
@@ -103,9 +113,9 @@ def list_subcategories(category_slug: str) -> tuple[str, list[dict]]:
         key = sub_slug or "__none__"
         bucket = counts.setdefault(key, {"slug": sub_slug, "name": sub or "Uncategorized", "count": 0})
         bucket["count"] += 1
-    out = list(counts.values())
+    out = [Subcategory(slug=b["slug"], name=b["name"], count=b["count"]) for b in counts.values()]
     sub_order = {slugify(s): i for i, s in enumerate(CATEGORIES.get(category_name, []))}
-    out.sort(key=lambda s: (sub_order.get(s["slug"], 999), s["name"]))
+    out.sort(key=lambda s: (sub_order.get(s.slug, 999), s.name))
     return category_name, out
 
 
