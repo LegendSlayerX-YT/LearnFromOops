@@ -12,77 +12,15 @@ IMAGES_DIR = DATA_DIR / "images"
 MISTAKES_DIR = DATA_DIR / "mistakes"
 
 
-_LEGACY_CATEGORY_MAP: dict[str, tuple[str, str]] = {
-    "Arithmetic": ("Algebra", "Foundational Algebra"),
-    "Fractions & Decimals": ("Algebra", "Foundational Algebra"),
-    "Percentages": ("Consumer & Applied Math", "Personal Finance"),
-    "Ratios & Proportions": ("Algebra", "Foundational Algebra"),
-    "Linear Equations": ("Algebra", "Linear Equations & Inequalities"),
-    "Inequalities": ("Algebra", "Linear Equations & Inequalities"),
-    "Polynomials": ("Algebra", "Quadratic & Polynomial Functions"),
-    "Exponents & Roots": ("Algebra", "Exponential & Logarithmic Functions"),
-    "Functions & Graphing": ("Algebra", "Quadratic & Polynomial Functions"),
-    "Geometry": ("Geometry", "Planar & Solid Geometry"),
-    "Measurement": ("Consumer & Applied Math", "Measurement & Estimation"),
-    "Probability": ("Probability & Statistics", "Probability Theory"),
-    "Statistics": ("Probability & Statistics", "Descriptive Statistics"),
-    "Combinatorics": ("Probability & Statistics", "Probability Theory"),
-    "Trigonometry": ("Geometry", "Trigonometry"),
-    "Complex Numbers": ("Algebra", "Foundational Algebra"),
-}
-
-
 def _ensure_dirs() -> None:
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     MISTAKES_DIR.mkdir(parents=True, exist_ok=True)
-    _migrate_legacy_layout()
 
 
 def slugify(name: str) -> str:
     s = name.lower().replace("&", "and")
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s or "uncategorized"
-
-
-def _migrate_legacy_layout() -> None:
-    # Old layout: data/mistakes/<category-slug>/<id>.{json,html}
-    # New layout: data/mistakes/<id>.{json,html}, with category+subcategory in JSON.
-    legacy_dirs = [p for p in MISTAKES_DIR.iterdir() if p.is_dir()]
-    if not legacy_dirs:
-        return
-    for sub in legacy_dirs:
-        for jf in sub.glob("*.json"):
-            try:
-                data = json.loads(jf.read_text())
-            except (json.JSONDecodeError, OSError):
-                continue
-            old_category = data.get("category", "")
-            mapped = _LEGACY_CATEGORY_MAP.get(old_category)
-            if mapped:
-                top, subcat = mapped
-            elif old_category in CATEGORIES:
-                top = old_category
-                subcat = CATEGORIES[old_category][0]
-            else:
-                top, subcat = ("Algebra", "Foundational Algebra")
-            data["category"] = top
-            data["category_slug"] = slugify(top)
-            data["subcategory"] = subcat
-            data["subcategory_slug"] = slugify(subcat)
-            target = MISTAKES_DIR / jf.name
-            tmp = target.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(data, indent=2))
-            tmp.rename(target)
-            standalone = (MISTAKES_DIR / target.stem).with_suffix(".html")
-            standalone.write_text(_render_standalone_html(data))
-            jf.unlink()
-            old_html = jf.with_suffix(".html")
-            if old_html.exists():
-                old_html.unlink()
-        try:
-            sub.rmdir()
-        except OSError:
-            pass
 
 
 def save_mistake(image_bytes: bytes, image_ext: str, analysis, mistake_id: str | None = None) -> str:
