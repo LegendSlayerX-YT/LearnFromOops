@@ -8,8 +8,11 @@
 <ul class="mistake-list">
   {% for m in mistakes %}
     <li>
-      <a href="{{ url_for('view_mistake', category=m.category_slug, mistake_id=m.id) }}">
-        <span class="badge">{{ m.category }}</span>
+      <a href="{{ url_for('view_mistake', mistake_id=m.id) }}">
+        <div class="badge-row">
+          <span class="badge">{{ m.category }}</span>
+          {% if m.subcategory %}<span class="badge badge-sub">{{ m.subcategory }}</span>{% endif %}
+        </div>
         <div class="mistake-snippet">{{ m.problem }}</div>
         <div class="mistake-meta">{{ m.created_at }}</div>
       </a>

@@ -3,7 +3,10 @@
 {% block content %}
 <h1>New Mistake</h1>
 <p>Upload a photo of the problem with the wrong answer. The AI will read it, classify it, and show the correct solution.</p>
-{% if lan_url %}<p class="hint">To use your phone's camera, open this site on your phone: <code>{{ lan_url }}</code> (must be on the same Wi-Fi).</p>{% endif %}
+{% if lan_url %}<div class="hint">
+  <p>To use your phone's camera, scan the QR code or open <code>{{ lan_url }}</code> (same Wi-Fi required).</p>
+  {% if qr_code %}<img src="data:image/png;base64,{{ qr_code }}" alt="QR code for {{ lan_url }}" class="qr-code">{% endif %}
+</div>{% endif %}
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 {% if queued %}<div class="notice">Got it — your image is being analyzed in the background. Upload another below if you have more.</div>{% endif %}
 <form method="POST" enctype="multipart/form-data" class="upload-form">

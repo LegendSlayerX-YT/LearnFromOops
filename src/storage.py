@@ -5,14 +5,37 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from config import CATEGORIES, TOP_CATEGORIES
+
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 IMAGES_DIR = DATA_DIR / "images"
 MISTAKES_DIR = DATA_DIR / "mistakes"
 
 
+_LEGACY_CATEGORY_MAP: dict[str, tuple[str, str]] = {
+    "Arithmetic": ("Algebra", "Foundational Algebra"),
+    "Fractions & Decimals": ("Algebra", "Foundational Algebra"),
+    "Percentages": ("Consumer & Applied Math", "Personal Finance"),
+    "Ratios & Proportions": ("Algebra", "Foundational Algebra"),
+    "Linear Equations": ("Algebra", "Linear Equations & Inequalities"),
+    "Inequalities": ("Algebra", "Linear Equations & Inequalities"),
+    "Polynomials": ("Algebra", "Quadratic & Polynomial Functions"),
+    "Exponents & Roots": ("Algebra", "Exponential & Logarithmic Functions"),
+    "Functions & Graphing": ("Algebra", "Quadratic & Polynomial Functions"),
+    "Geometry": ("Geometry", "Planar & Solid Geometry"),
+    "Measurement": ("Consumer & Applied Math", "Measurement & Estimation"),
+    "Probability": ("Probability & Statistics", "Probability Theory"),
+    "Statistics": ("Probability & Statistics", "Descriptive Statistics"),
+    "Combinatorics": ("Probability & Statistics", "Probability Theory"),
+    "Trigonometry": ("Geometry", "Trigonometry"),
+    "Complex Numbers": ("Algebra", "Foundational Algebra"),
+}
+
+
 def _ensure_dirs() -> None:
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     MISTAKES_DIR.mkdir(parents=True, exist_ok=True)
+    _migrate_legacy_layout()
 
 
 def slugify(name: str) -> str:
@@ -21,23 +44,64 @@ def slugify(name: str) -> str:
     return s or "uncategorized"
 
 
-def save_mistake(image_bytes: bytes, image_ext: str, analysis, mistake_id: str | None = None) -> tuple[str, str]:
+def _migrate_legacy_layout() -> None:
+    # Old layout: data/mistakes/<category-slug>/<id>.{json,html}
+    # New layout: data/mistakes/<id>.{json,html}, with category+subcategory in JSON.
+    legacy_dirs = [p for p in MISTAKES_DIR.iterdir() if p.is_dir()]
+    if not legacy_dirs:
+        return
+    for sub in legacy_dirs:
+        for jf in sub.glob("*.json"):
+            try:
+                data = json.loads(jf.read_text())
+            except (json.JSONDecodeError, OSError):
+                continue
+            old_category = data.get("category", "")
+            mapped = _LEGACY_CATEGORY_MAP.get(old_category)
+            if mapped:
+                top, subcat = mapped
+            elif old_category in CATEGORIES:
+                top = old_category
+                subcat = CATEGORIES[old_category][0]
+            else:
+                top, subcat = ("Algebra", "Foundational Algebra")
+            data["category"] = top
+            data["category_slug"] = slugify(top)
+            data["subcategory"] = subcat
+            data["subcategory_slug"] = slugify(subcat)
+            target = MISTAKES_DIR / jf.name
+            tmp = target.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(data, indent=2))
+            tmp.rename(target)
+            standalone = (MISTAKES_DIR / target.stem).with_suffix(".html")
+            standalone.write_text(_render_standalone_html(data))
+            jf.unlink()
+            old_html = jf.with_suffix(".html")
+            if old_html.exists():
+                old_html.unlink()
+        try:
+            sub.rmdir()
+        except OSError:
+            pass
+
+
+def save_mistake(image_bytes: bytes, image_ext: str, analysis, mistake_id: str | None = None) -> str:
     _ensure_dirs()
     if mistake_id is None:
         mistake_id = uuid.uuid4().hex[:12]
     created_at = datetime.now().isoformat(timespec="seconds")
-    category_slug = slugify(analysis.category)
+    category = analysis.category
+    subcategory = getattr(analysis, "subcategory", "") or ""
 
     image_filename = f"{mistake_id}{image_ext}"
     (IMAGES_DIR / image_filename).write_bytes(image_bytes)
 
-    category_dir = MISTAKES_DIR / category_slug
-    category_dir.mkdir(parents=True, exist_ok=True)
-
     metadata = {
         "id": mistake_id,
-        "category": analysis.category,
-        "category_slug": category_slug,
+        "category": category,
+        "category_slug": slugify(category),
+        "subcategory": subcategory,
+        "subcategory_slug": slugify(subcategory) if subcategory else "",
         "created_at": created_at,
         "image_filename": image_filename,
         "problem": analysis.problem,
@@ -45,45 +109,95 @@ def save_mistake(image_bytes: bytes, image_ext: str, analysis, mistake_id: str |
         "ideal_answer": analysis.ideal_answer,
         "explanation": analysis.explanation,
     }
-    (category_dir / f"{mistake_id}.json").write_text(json.dumps(metadata, indent=2))
-    (category_dir / f"{mistake_id}.html").write_text(_render_standalone_html(metadata))
-    return mistake_id, category_slug
+    (MISTAKES_DIR / f"{mistake_id}.json").write_text(json.dumps(metadata, indent=2))
+    (MISTAKES_DIR / f"{mistake_id}.html").write_text(_render_standalone_html(metadata))
+    return mistake_id
 
 
-def list_categories() -> list[dict]:
+def _iter_mistakes() -> list[dict]:
     _ensure_dirs()
-    out = []
-    for path in sorted(MISTAKES_DIR.iterdir()):
-        if not path.is_dir():
+    out: list[dict] = []
+    for jf in MISTAKES_DIR.glob("*.json"):
+        try:
+            out.append(json.loads(jf.read_text()))
+        except (json.JSONDecodeError, OSError):
             continue
-        files = list(path.glob("*.json"))
-        if not files:
-            continue
-        display = json.loads(files[0].read_text())["category"]
-        out.append({"slug": path.name, "name": display, "count": len(files)})
     return out
 
 
-def list_mistakes_in_category(category_slug: str) -> list[dict]:
-    _ensure_dirs()
-    category_dir = MISTAKES_DIR / category_slug
-    if not category_dir.exists():
-        return []
-    items = [json.loads(f.read_text()) for f in category_dir.glob("*.json")]
-    items.sort(key=lambda m: m["created_at"], reverse=True)
-    return items
+def list_categories() -> list[dict]:
+    items = _iter_mistakes()
+    counts: dict[str, dict] = {}
+    for m in items:
+        cat = m.get("category", "")
+        slug = m.get("category_slug", slugify(cat))
+        if not cat:
+            continue
+        bucket = counts.setdefault(slug, {"slug": slug, "name": cat, "count": 0, "subcategories": set()})
+        bucket["count"] += 1
+        sub = m.get("subcategory", "")
+        if sub:
+            bucket["subcategories"].add(sub)
+    out = []
+    for bucket in counts.values():
+        out.append({
+            "slug": bucket["slug"],
+            "name": bucket["name"],
+            "count": bucket["count"],
+            "sub_count": len(bucket["subcategories"]),
+        })
+    # Stable order: by configured top-category order, then alphabetic for unknown.
+    order = {slugify(name): i for i, name in enumerate(TOP_CATEGORIES)}
+    out.sort(key=lambda c: (order.get(c["slug"], 999), c["name"]))
+    return out
 
 
-def get_mistake(category_slug: str, mistake_id: str) -> dict | None:
+def list_subcategories(category_slug: str) -> tuple[str, list[dict]]:
+    items = _iter_mistakes()
+    category_name = ""
+    counts: dict[str, dict] = {}
+    for m in items:
+        if m.get("category_slug") != category_slug:
+            continue
+        category_name = m.get("category", category_name)
+        sub = m.get("subcategory", "")
+        sub_slug = m.get("subcategory_slug", slugify(sub) if sub else "")
+        key = sub_slug or "__none__"
+        bucket = counts.setdefault(key, {"slug": sub_slug, "name": sub or "Uncategorized", "count": 0})
+        bucket["count"] += 1
+    out = list(counts.values())
+    sub_order = {slugify(s): i for i, s in enumerate(CATEGORIES.get(category_name, []))}
+    out.sort(key=lambda s: (sub_order.get(s["slug"], 999), s["name"]))
+    return category_name, out
+
+
+def list_mistakes_in_subcategory(category_slug: str, subcategory_slug: str) -> tuple[str, str, list[dict]]:
+    items = _iter_mistakes()
+    category_name = ""
+    subcategory_name = ""
+    out: list[dict] = []
+    for m in items:
+        if m.get("category_slug") != category_slug:
+            continue
+        if (m.get("subcategory_slug") or "") != subcategory_slug:
+            continue
+        category_name = m.get("category", category_name)
+        subcategory_name = m.get("subcategory", subcategory_name)
+        out.append(m)
+    out.sort(key=lambda m: m["created_at"], reverse=True)
+    return category_name, subcategory_name, out
+
+
+def get_mistake(mistake_id: str) -> dict | None:
     _ensure_dirs()
-    json_file = MISTAKES_DIR / category_slug / f"{mistake_id}.json"
+    json_file = MISTAKES_DIR / f"{mistake_id}.json"
     if not json_file.exists():
         return None
     return json.loads(json_file.read_text())
 
 
-def mark_seen(category_slug: str, mistake_id: str) -> None:
-    json_file = MISTAKES_DIR / category_slug / f"{mistake_id}.json"
+def mark_seen(mistake_id: str) -> None:
+    json_file = MISTAKES_DIR / f"{mistake_id}.json"
     if not json_file.exists():
         return
     data = json.loads(json_file.read_text())
@@ -94,18 +208,15 @@ def mark_seen(category_slug: str, mistake_id: str) -> None:
 
 
 def list_new_mistakes() -> list[dict]:
-    _ensure_dirs()
-    items = []
-    for jf in MISTAKES_DIR.glob("*/*.json"):
-        data = json.loads(jf.read_text())
-        if not data.get("last_seen_at"):
-            items.append(data)
+    items = [m for m in _iter_mistakes() if not m.get("last_seen_at")]
     items.sort(key=lambda m: m["created_at"], reverse=True)
     return items
 
 
 def _render_standalone_html(m: dict) -> str:
     e = html.escape
+    sub = m.get("subcategory") or ""
+    sub_chip = f' <span class="badge">{e(sub)}</span>' if sub else ""
     return f"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -121,8 +232,8 @@ h2 {{ font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color:
 .meta {{ color: #9ca3af; font-size: 0.85rem; }}
 </style></head>
 <body>
-<p><span class="badge">{e(m['category'])}</span></p>
-<img src="../../images/{e(m['image_filename'])}" alt="Original problem">
+<p><span class="badge">{e(m['category'])}</span>{sub_chip}</p>
+<img src="../images/{e(m['image_filename'])}" alt="Original problem">
 <section><h2>Problem</h2><p>{e(m['problem'])}</p></section>
 <section class="wrong"><h2>Student Answer</h2><p>{e(m['student_answer'])}</p></section>
 <section class="right"><h2>Correct Answer</h2><p><strong>{e(m['ideal_answer'])}</strong></p></section>

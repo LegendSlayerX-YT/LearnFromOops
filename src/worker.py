@@ -61,6 +61,7 @@ def _process(sidecar: Path) -> None:
     image_bytes = image_path.read_bytes()
     try:
         analysis = gemini_client.analyze_image(image_bytes, mime)
+        analysis.subcategory = gemini_client.classify_subcategory(analysis)
     except Exception as exc:
         meta["attempts"] = meta.get("attempts", 0) + 1
         meta["last_error"] = f"{type(exc).__name__}: {exc}"
@@ -79,7 +80,8 @@ def _process(sidecar: Path) -> None:
     storage.save_mistake(image_bytes, ext, analysis, mistake_id=job_id)
     sidecar.unlink()
     image_path.unlink()
-    print(f"[worker] {job_id} done — {analysis.category}")
+    label = f"{analysis.category} / {analysis.subcategory}" if analysis.subcategory else analysis.category
+    print(f"[worker] {job_id} done — {label}")
 
 
 def _scan_once() -> None:

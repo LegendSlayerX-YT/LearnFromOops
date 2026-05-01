@@ -1,8 +1,11 @@
+import base64
+import io
 import socket
 from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, abort, redirect, render_template, request, send_from_directory, url_for
+import qrcode
 
 load_dotenv()
 
@@ -24,6 +27,16 @@ def _lan_ip() -> str:
 
 
 LAN_URL = f"http://{_lan_ip()}:{PORT}"
+UPLOAD_URL = f"{LAN_URL}/upload"
+
+
+def _make_qr_b64(url: str) -> str:
+    buf = io.BytesIO()
+    qrcode.make(url).save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+_UPLOAD_QR_B64 = _make_qr_b64(UPLOAD_URL)
 
 
 def _is_mobile() -> bool:
@@ -66,37 +79,59 @@ def view_new():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
-    lan_url = None if _is_mobile() else LAN_URL
+    mobile = _is_mobile()
+    lan_url = None if mobile else UPLOAD_URL
+    qr_code = None if mobile else _UPLOAD_QR_B64
     if request.method == "GET":
-        return render_template("upload.html", lan_url=lan_url)
+        return render_template("upload.html", lan_url=lan_url, qr_code=qr_code)
 
     file = request.files.get("image")
     if not file or not file.filename:
-        return render_template("upload.html", error="Please choose an image.", lan_url=lan_url), 400
+        return render_template("upload.html", error="Please choose an image.", lan_url=lan_url, qr_code=qr_code), 400
 
     image_bytes = file.read()
     ext = Path(file.filename).suffix.lower() or ".jpg"
     mime = file.mimetype or "image/jpeg"
 
     inbox.enqueue(image_bytes, ext, mime)
-    return render_template("upload.html", queued=True, lan_url=lan_url)
+    return render_template("upload.html", queued=True, lan_url=lan_url, qr_code=qr_code)
 
 
 @app.route("/category/<category>")
 def view_category(category):
-    mistakes = storage.list_mistakes_in_category(category)
+    name, subcategories = storage.list_subcategories(category)
+    if not subcategories:
+        abort(404)
+    return render_template(
+        "category.html",
+        category=name,
+        slug=category,
+        subcategories=subcategories,
+    )
+
+
+@app.route("/category/<category>/<subcategory>")
+def view_subcategory(category, subcategory):
+    cat_name, sub_name, mistakes = storage.list_mistakes_in_subcategory(category, subcategory)
     if not mistakes:
         abort(404)
-    return render_template("category.html", category=mistakes[0]["category"], slug=category, mistakes=mistakes)
+    return render_template(
+        "subcategory.html",
+        category=cat_name,
+        subcategory=sub_name,
+        category_slug=category,
+        subcategory_slug=subcategory,
+        mistakes=mistakes,
+    )
 
 
-@app.route("/mistake/<category>/<mistake_id>")
-def view_mistake(category, mistake_id):
-    mistake = storage.get_mistake(category, mistake_id)
+@app.route("/mistake/<mistake_id>")
+def view_mistake(mistake_id):
+    mistake = storage.get_mistake(mistake_id)
     if not mistake:
         abort(404)
-    storage.mark_seen(category, mistake_id)
-    return render_template("mistake.html", mistake=mistake, slug=category)
+    storage.mark_seen(mistake_id)
+    return render_template("mistake.html", mistake=mistake)
 
 
 @app.route("/images/<filename>")

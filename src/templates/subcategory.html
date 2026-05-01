@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ subcategory }} — LearnFromOops{% endblock %}
+{% block content %}
+<a href="{{ url_for('view_category', category=category_slug) }}" class="back">← {{ category }}</a>
+<h1>{{ subcategory }}</h1>
+<p class="subtitle">{{ category }}</p>
+<ul class="mistake-list">
+  {% for m in mistakes %}
+    <li>
+      <a href="{{ url_for('view_mistake', mistake_id=m.id) }}">
+        <div class="mistake-snippet">{{ m.problem }}</div>
+        <div class="mistake-meta">{{ m.created_at }}</div>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

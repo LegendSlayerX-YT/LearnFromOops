@@ -3,12 +3,13 @@
 {% block content %}
 <a href="{{ url_for('index') }}" class="back">← All categories</a>
 <h1>{{ category }}</h1>
-<ul class="mistake-list">
-  {% for m in mistakes %}
+<p class="subtitle">{{ subcategories|length }} subcategor{{ 'y' if subcategories|length == 1 else 'ies' }}</p>
+<ul class="category-grid">
+  {% for s in subcategories %}
     <li>
-      <a href="{{ url_for('view_mistake', category=slug, mistake_id=m.id) }}">
-        <div class="mistake-snippet">{{ m.problem }}</div>
-        <div class="mistake-meta">{{ m.created_at }}</div>
+      <a href="{{ url_for('view_subcategory', category=slug, subcategory=s.slug) }}">
+        <span class="cat-name">{{ s.name }}</span>
+        <span class="cat-count">{{ s.count }}</span>
       </a>
     </li>
   {% endfor %}

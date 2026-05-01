@@ -37,7 +37,10 @@
   {% for c in categories %}
     <li>
       <a href="{{ url_for('view_category', category=c.slug) }}">
-        <span class="cat-name">{{ c.name }}</span>
+        <span class="cat-name">
+          {{ c.name }}
+          <span class="cat-sub-count">{{ c.sub_count }} subcategor{{ 'y' if c.sub_count == 1 else 'ies' }}</span>
+        </span>
         <span class="cat-count">{{ c.count }}</span>
       </a>
     </li>

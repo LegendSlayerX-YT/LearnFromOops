@@ -1,9 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ mistake.category }} mistake — LearnFromOops{% endblock %}
 {% block content %}
-<a href="{{ url_for('view_category', category=slug) }}" class="back">← Back to {{ mistake.category }}</a>
+{% if mistake.subcategory_slug %}
+<a href="{{ url_for('view_subcategory', category=mistake.category_slug, subcategory=mistake.subcategory_slug) }}" class="back">← Back to {{ mistake.subcategory }}</a>
+{% else %}
+<a href="{{ url_for('view_category', category=mistake.category_slug) }}" class="back">← Back to {{ mistake.category }}</a>
+{% endif %}
 <article class="mistake">
-  <span class="badge">{{ mistake.category }}</span>
+  <div class="badge-row">
+    <span class="badge">{{ mistake.category }}</span>
+    {% if mistake.subcategory %}<span class="badge badge-sub">{{ mistake.subcategory }}</span>{% endif %}
+  </div>
   <img src="{{ url_for('serve_image', filename=mistake.image_filename) }}" alt="Original problem">
   <section>
     <h2>Problem</h2>

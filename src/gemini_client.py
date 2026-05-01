@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from config import CATEGORIES
+from config import TOP_CATEGORIES, subcategories_for
 
 
 class MistakeAnalysis(BaseModel):
@@ -13,6 +13,11 @@ class MistakeAnalysis(BaseModel):
     category: str
     ideal_answer: str
     explanation: str
+    subcategory: str = ""
+
+
+class _SubcategoryChoice(BaseModel):
+    subcategory: str
 
 
 _PROMPT = """You are analyzing a photo of a math problem that a student may have answered incorrectly.
@@ -22,9 +27,21 @@ Format any math expression as LaTeX, using $...$ for inline math and $$...$$ for
 Return a JSON object with these fields:
 - problem: the full text of the math problem, transcribed exactly, with math wrapped in $...$ (e.g. "Solve $x^2 + 3x = 10$.").
 - student_answer: the student's written answer (which is wrong), with math in LaTeX wrapped in $...$ or $$...$$. If you cannot find one, return an empty string.
-- category: classify the problem into EXACTLY ONE of these categories: {categories}. Return the category string verbatim.
+- category: classify the problem into EXACTLY ONE of these top-level categories: {categories}. Return the category string verbatim.
 - ideal_answer: the correct final answer, with math in LaTeX wrapped in $...$ or $$...$$.
 - explanation: a short, kid-friendly step-by-step explanation. Plain prose for the words; wrap every math expression in $...$ or $$...$$. Separate steps with real newline characters in the JSON string (the JSON encoder will emit them as \\n on the wire). Do NOT write the two-character sequence backslash-n as visible text, and do NOT use <br> or other HTML tags.
+"""
+
+
+_SUB_PROMPT = """A math problem has already been classified under the top-level category "{category}".
+
+Choose the most specific subcategory from this list, returning the string verbatim: {subcategories}.
+
+Problem: {problem}
+Correct answer: {ideal_answer}
+Explanation: {explanation}
+
+Return a JSON object: {{"subcategory": "..."}}.
 """
 
 
@@ -47,13 +64,16 @@ def _get_client() -> genai.Client:
     return _client
 
 
+def _model_name() -> str:
+    return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+
+
 def analyze_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> MistakeAnalysis:
-    print("Start Analyzing image with Gemini...")
+    print("Start Analyzing image with Gemini (top-level)...")
     client = _get_client()
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-    prompt = _PROMPT.format(categories=", ".join(CATEGORIES))
+    prompt = _PROMPT.format(categories=", ".join(TOP_CATEGORIES))
     response = client.models.generate_content(
-        model=model,
+        model=_model_name(),
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
             prompt,
@@ -63,10 +83,37 @@ def analyze_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> MistakeA
             response_schema=MistakeAnalysis,
         ),
     )
-    print("Finished analyzing image with Gemini.")
+    print("Finished top-level classification.")
     result = MistakeAnalysis.model_validate_json(response.text)
     result.problem = _normalize_newlines(result.problem)
     result.student_answer = _normalize_newlines(result.student_answer)
     result.ideal_answer = _normalize_newlines(result.ideal_answer)
     result.explanation = _normalize_newlines(result.explanation)
+    result.subcategory = ""
     return result
+
+
+def classify_subcategory(analysis: MistakeAnalysis) -> str:
+    subs = subcategories_for(analysis.category)
+    if not subs:
+        return ""
+    print(f"Start subcategory classification under '{analysis.category}'...")
+    client = _get_client()
+    prompt = _SUB_PROMPT.format(
+        category=analysis.category,
+        subcategories=", ".join(subs),
+        problem=analysis.problem,
+        ideal_answer=analysis.ideal_answer,
+        explanation=analysis.explanation,
+    )
+    response = client.models.generate_content(
+        model=_model_name(),
+        contents=[prompt],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=_SubcategoryChoice,
+        ),
+    )
+    print("Finished subcategory classification.")
+    choice = _SubcategoryChoice.model_validate_json(response.text)
+    return choice.subcategory if choice.subcategory in subs else subs[0]
