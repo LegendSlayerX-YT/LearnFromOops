@@ -1,0 +1,14 @@
+{
+  "id": "5efcf4ca88fa",
+  "category": "Geometry",
+  "category_slug": "geometry",
+  "created_at": "2026-04-30T14:18:33",
+  "image_filename": "5efcf4ca88fa.jpg",
+  "problem": "Is the sequence $\\{2 \\sin(n) + 2 \\cos(n)\\}_{n=0}^{\\frac{\\pi}{2}}$ bounded?\n\nA. Upper bounded\nB. Lower bounded\nC. Both\nD. Neither",
+  "student_answer": "Both",
+  "ideal_answer": "Both",
+  "explanation": "To determine if a sequence is bounded, we need to check if its terms always stay within a specific range of values.\n\n1. The terms of the sequence are given by the expression $2 \\sin(n) + 2 \\cos(n)$.\n\n2. Recall that the basic trigonometric functions $\\sin(n)$ and $\\cos(n)$ are always bounded between $-1$ and $1$. That is, $-1 \\le \\sin(n) \\le 1$ and $-1 \\le \\cos(n) \\le 1$ for any value of $n$.\n\n3. Multiplying these by $2$ tells us that $-2 \\le 2 \\sin(n) \\le 2$ and $-2 \\le 2 \\cos(n) \\le 2$.\n\n4. When you add two bounded functions together, the result is also bounded. Here, the sum $2 \\sin(n) + 2 \\cos(n)$ will never be greater than $4$ and never be less than $-4$ (actually, it stays between $-2\\sqrt{2}$ and $2\\sqrt{2}$).\n\n5. Since the sequence has both a ceiling it cannot go above (upper bound) and a floor it cannot go below (lower bound), it is both upper and lower bounded.",
+  "last_seen_at": "2026-04-30T14:18:55",
+  "subcategory": "Trigonometry",
+  "subcategory_slug": "trigonometry"
+}

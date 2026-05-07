@@ -1,0 +1,14 @@
+{
+  "id": "b3e1bd33919e",
+  "category": "Algebra",
+  "category_slug": "algebra",
+  "created_at": "2026-04-30T12:51:33",
+  "image_filename": "b3e1bd33919e.jpg",
+  "problem": "For the sequence $\\frac{1^4}{1^4 + n^4}, \\frac{2^4}{2^4 + (n-1)^4}, \\frac{3^4}{3^4 + (n-2)^4}, \\dots, \\frac{n^4}{n^4 + 1^4}$, the sum $S_n = \\underline{\\quad\\quad}$.",
+  "student_answer": "\\frac{n}{2}",
+  "ideal_answer": "\\frac{n}{2}",
+  "explanation": "To find the sum $S_n$, we can use the 'Reverse and Add' method suggested in the concept banner.\n\n1. Identify the terms: There are $n$ terms in this sequence. Let's call the $k$-th term $a_k$. The general form is $a_k = \\frac{k^4}{k^4 + (n+1-k)^4}$.\n\n2. Look for pairs: Notice what happens when we add the first term ($a_1$) and the last term ($a_n$):\n$$a_1 + a_n = \\frac{1^4}{1^4 + n^4} + \\frac{n^4}{n^4 + 1^4} = \\frac{1^4 + n^4}{1^4 + n^4} = 1$$\nThis pattern works for all pairs. In general, $a_k + a_{n+1-k} = 1$ because the numerators and denominators match perfectly.\n\n3. Calculate the total: If we add the sequence to itself in reverse order, we create $n$ pairs of terms. Since each pair adds up to 1, the total for two copies of the sum is:\n$$2S_n = 1 + 1 + \\dots + 1 \\text{ ($n$ times)} = n$$\n\n4. Solve for $S_n$: Dividing by 2, we get the final result:\n$$S_n = \\frac{n}{2}$$",
+  "last_seen_at": "2026-04-30T14:54:36",
+  "subcategory": "Foundational Algebra",
+  "subcategory_slug": "foundational-algebra"
+}

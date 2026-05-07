@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Calculus mistake — 2026-04-30T17:50:49</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
+img { max-width: 100%; border-radius: 8px; }
+.badge { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.25rem; }
+.wrong h2 { color: #dc2626; }
+.right h2 { color: #059669; }
+.explanation { white-space: pre-line; }
+.meta { color: #9ca3af; font-size: 0.85rem; }
+</style></head>
+<body>
+<p><span class="badge">Calculus</span> <span class="badge">Limits &amp; Continuity</span></p>
+<img src="../images/ba9e8010851d.jpg" alt="Original problem">
+<section><h2>Problem</h2><p>7 Which of the statements are true about the function $y = f(x)$ graphed there, and which are false?
+1. $\lim_{x \to -1^+} f(x) = 1$
+2. $\lim_{x \to 0^-} f(x) = 0$
+3. $\lim_{x \to 0^-} f(x) = 1$
+4. $\lim_{x \to 0^-} f(x) = \lim_{x \to 0^+} f(x)$
+5. $\lim_{x \to 0} f(x)$ exists
+6. $\lim_{x \to 1} f(x) = 1$
+7. $\lim_{x \to 2^-} f(x) = 2$</p></section>
+<section class="wrong"><h2>Student Answer</h2><p>1. true, 2. true, 3. false, 4. true, 5. false, 6. false, 7. false</p></section>
+<section class="right"><h2>Correct Answer</h2><p><strong>1. True, 2. True, 3. False, 4. True, 5. True, 6. False, 7. False</strong></p></section>
+<section><h2>How to Solve</h2><p class="explanation">Let&#x27;s check each statement by looking at the graph:
+
+1. As we approach $x = -1$ from the right side, the curve goes to $y = 1$. This is True.
+2. As we approach $x = 0$ from the left side, the curve goes to the origin $(0, 0)$. So the limit is 0. This is True.
+3. Since we just found the limit from the left is 0, it cannot be 1. This is False.
+4. As we approach $x = 0$ from the right, the curve also goes to the origin. Since both side limits are 0, they are equal. This is True.
+5. Because the left-hand and right-hand limits at $x = 0$ are the same, the two-sided limit exists (it is 0). This is True. The student incorrectly labeled this as &#x27;false&#x27;.
+6. As $x$ approaches 1 from the left, $y$ approaches $-1$. As $x$ approaches 1 from the right, $y$ approaches 1. Since these don&#x27;t match, the limit doesn&#x27;t exist, so saying it is 1 is False.
+7. For $x &gt; 1$, the function is a horizontal line at $y = 1$. This means at $x = 2$, the limit from the left is 1, not 2. This is False.</p></section>
+<p class="meta">Captured 2026-04-30T17:50:49</p>
+</body></html>

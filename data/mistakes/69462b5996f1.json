@@ -1,0 +1,14 @@
+{
+  "id": "69462b5996f1",
+  "category": "Algebra",
+  "category_slug": "algebra",
+  "created_at": "2026-04-30T12:26:08",
+  "image_filename": "69462b5996f1.jpg",
+  "problem": "Given that the sum of all binomial coefficients in the expansion of $(2x + \\frac{3}{x})^n$ is 64, the coefficient of the $x^2$ term is \\_\\_\\_\\_\\_.",
+  "student_answer": "2160",
+  "ideal_answer": "2160",
+  "explanation": "To find the coefficient of the $x^2$ term, follow these steps:\n\n1. Find the value of $n$: The sum of all binomial coefficients in the expansion of $(a+b)^n$ is always $2^n$. Given that this sum is 64, we solve for $n$: \n$2^n = 64$ \n$2^6 = 64$, so $n = 6$.\n\n2. Write the general term of the expansion: The expansion is $(2x + \\frac{3}{x})^6$. The $(r+1)$-th term is given by the formula:\n$T_{r+1} = \\binom{6}{r} (2x)^{6-r} (\\frac{3}{x})^r$\n\n3. Simplify the powers of $x$: \n$T_{r+1} = \\binom{6}{r} \\cdot 2^{6-r} \\cdot x^{6-r} \\cdot 3^r \\cdot x^{-r}$\n$T_{r+1} = \\binom{6}{r} \\cdot 2^{6-r} \\cdot 3^r \\cdot x^{6-2r}$\n\n4. Determine $r$ for the $x^2$ term: Set the exponent of $x$ equal to 2:\n$6 - 2r = 2$\n$-2r = -4$\n$r = 2$\n\n5. Calculate the coefficient: Substitute $r = 2$ back into the coefficient part of the term:\nCoefficient $= \\binom{6}{2} \\cdot 2^{6-2} \\cdot 3^2$\nCoefficient $= 15 \\cdot 2^4 \\cdot 9$\nCoefficient $= 15 \\cdot 16 \\cdot 9$\nCoefficient $= 240 \\cdot 9 = 2160$.\n\nThough the student calculated the value correctly, the prompt suggests it is incorrect, possibly due to messy handwriting in the blank which could be misread as '2/60' or a failure to follow specific formatting requirements not shown.",
+  "last_seen_at": "2026-04-30T14:35:55",
+  "subcategory": "Polynomials",
+  "subcategory_slug": "polynomials"
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Geometry mistake — 2026-04-30T14:18:33</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
+img { max-width: 100%; border-radius: 8px; }
+.badge { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.25rem; }
+.wrong h2 { color: #dc2626; }
+.right h2 { color: #059669; }
+.explanation { white-space: pre-line; }
+.meta { color: #9ca3af; font-size: 0.85rem; }
+</style></head>
+<body>
+<p><span class="badge">Geometry</span> <span class="badge">Trigonometry</span></p>
+<img src="../images/5efcf4ca88fa.jpg" alt="Original problem">
+<section><h2>Problem</h2><p>Is the sequence $\{2 \sin(n) + 2 \cos(n)\}_{n=0}^{\frac{\pi}{2}}$ bounded?
+
+A. Upper bounded
+B. Lower bounded
+C. Both
+D. Neither</p></section>
+<section class="wrong"><h2>Student Answer</h2><p>Both</p></section>
+<section class="right"><h2>Correct Answer</h2><p><strong>Both</strong></p></section>
+<section><h2>How to Solve</h2><p class="explanation">To determine if a sequence is bounded, we need to check if its terms always stay within a specific range of values.
+
+1. The terms of the sequence are given by the expression $2 \sin(n) + 2 \cos(n)$.
+
+2. Recall that the basic trigonometric functions $\sin(n)$ and $\cos(n)$ are always bounded between $-1$ and $1$. That is, $-1 \le \sin(n) \le 1$ and $-1 \le \cos(n) \le 1$ for any value of $n$.
+
+3. Multiplying these by $2$ tells us that $-2 \le 2 \sin(n) \le 2$ and $-2 \le 2 \cos(n) \le 2$.
+
+4. When you add two bounded functions together, the result is also bounded. Here, the sum $2 \sin(n) + 2 \cos(n)$ will never be greater than $4$ and never be less than $-4$ (actually, it stays between $-2\sqrt{2}$ and $2\sqrt{2}$).
+
+5. Since the sequence has both a ceiling it cannot go above (upper bound) and a floor it cannot go below (lower bound), it is both upper and lower bounded.</p></section>
+<p class="meta">Captured 2026-04-30T14:18:33</p>
+</body></html>

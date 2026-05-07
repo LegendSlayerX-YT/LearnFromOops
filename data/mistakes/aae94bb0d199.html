@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Algebra mistake — 2026-04-30T12:36:30</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
+img { max-width: 100%; border-radius: 8px; }
+.badge { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.25rem; }
+.wrong h2 { color: #dc2626; }
+.right h2 { color: #059669; }
+.explanation { white-space: pre-line; }
+.meta { color: #9ca3af; font-size: 0.85rem; }
+</style></head>
+<body>
+<p><span class="badge">Algebra</span> <span class="badge">Quadratic &amp; Polynomial Functions</span></p>
+<img src="../images/aae94bb0d199.jpg" alt="Original problem">
+<section><h2>Problem</h2><p>Let $(3 - 2\sqrt{2}x)^{80} = b_0 + b_1x + b_2x^2 + \dots + b_{80}x^{80}$. Find the values of:
+(1) $b_0 = \underline{\quad\quad}$;
+(2) $b_1 + b_2 + \dots + b_{80} = \underline{\quad\quad}$.</p></section>
+<section class="wrong"><h2>Student Answer</h2><p>(1) $3^{80}$; (2) $(3 - 2\sqrt{2})^{80} - 3^{80}$</p></section>
+<section class="right"><h2>Correct Answer</h2><p><strong>(1) $3^{80}$; (2) $(3 - 2\sqrt{2})^{80} - 3^{80}$</strong></p></section>
+<section><h2>How to Solve</h2><p class="explanation">To solve this problem, we use the properties of polynomial identities and binomial expansions.
+
+1. To find the constant term $b_0$, we set $x = 0$ in the original identity. 
+   On the left side: $(3 - 2\sqrt{2}(0))^{80} = 3^{80}$.
+   On the right side: $b_0 + b_1(0) + b_2(0)^2 + \dots = b_0$.
+   Thus, $b_0 = 3^{80}$.
+
+2. To find the sum of all coefficients, we set $x = 1$.
+   On the left side: $(3 - 2\sqrt{2}(1))^{80} = (3 - 2\sqrt{2})^{80}$.
+   On the right side: $b_0 + b_1 + b_2 + \dots + b_{80}$.
+   So, $b_0 + b_1 + b_2 + \dots + b_{80} = (3 - 2\sqrt{2})^{80}$.
+
+3. To find the sum $b_1 + b_2 + \dots + b_{80}$, we take the sum of all coefficients and subtract the first coefficient $b_0$.
+   $b_1 + b_2 + \dots + b_{80} = (b_0 + b_1 + \dots + b_{80}) - b_0$
+   $b_1 + b_2 + \dots + b_{80} = (3 - 2\sqrt{2})^{80} - 3^{80}$.
+
+The student correctly derived the formulas, although they did not write the second answer directly on the provided blank line.</p></section>
+<p class="meta">Captured 2026-04-30T12:36:30</p>
+</body></html>
